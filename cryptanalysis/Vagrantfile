@@ -1,0 +1,43 @@
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+# Required workaround to have different users for provisioning and SSH access.
+VAGRANT_COMMAND = ARGV[0]
+
+# Username to be used in box - normally the name of your team.
+BOX_USERNAME = "d00ds" # TODO CHANGE THIS TO THE NAME OF YOUR TEAM!
+BOX_NAME = "Praktikum Kryptographie und Datensicherheit"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  # Configure the box.
+  config.vm.box = "ubuntu/trusty64" # Do not change to xenial64 as this will break things!
+  config.vm.hostname = "cryptanalysis"
+
+  # Configure SSH access.
+  if VAGRANT_COMMAND == "ssh"
+    config.ssh.username = BOX_USERNAME
+  end
+
+  # Increase RAM and CPUs.
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = BOX_NAME
+    vb.customize ["modifyvm", :id, "--memory", "4096"]
+    vb.customize ["modifyvm", :id, "--cpus", "2"]
+  end
+
+  # Share host folder.
+  config.vm.synced_folder "~/Dropbox/cryptanalysis", "/cryptanalysis"
+
+  # Provisioning: Add user and configure SSH keys and sudo-privileges.
+  config.vm.provision "shell", inline: "useradd -s /bin/bash -m #{BOX_USERNAME}"
+  config.vm.provision "shell", inline: "mkdir -p /home/#{BOX_USERNAME}/.ssh"
+  config.vm.provision "shell", inline: "cp -r /home/vagrant/.ssh/ /home/#{BOX_USERNAME}/"
+  config.vm.provision "shell", inline: "sudo chown -R #{BOX_USERNAME}:#{BOX_USERNAME} /home/#{BOX_USERNAME}"
+  config.vm.provision "shell", inline: "sed -i 's/vagrant/#{BOX_USERNAME}/g' /home/#{BOX_USERNAME}/.ssh/authorized_keys"
+  config.vm.provision "shell", inline: "chmod 600 /home/#{BOX_USERNAME}/.ssh/authorized_keys"
+  config.vm.provision "shell", inline: "chmod 700 /home/#{BOX_USERNAME}/.ssh/"
+  config.vm.provision "shell", inline: "echo '#{BOX_USERNAME} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/#{BOX_USERNAME}"
+
+  # Provisioning: Install required dev tools.
+  config.vm.provision "shell", inline: "apt-get install -y vim git build-essential libgmp3-dev"
+end
