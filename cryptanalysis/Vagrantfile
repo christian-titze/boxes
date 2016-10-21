@@ -10,7 +10,7 @@ BOX_NAME = "Praktikum Kryptographie und Datensicherheit"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Configure the box.
-  config.vm.box = "ubuntu/trusty64" # Do not change to xenial64 as this will break things!
+  config.vm.box = "bento/ubuntu-16.04"
   config.vm.hostname = "cryptanalysis"
 
   # Configure SSH access.
