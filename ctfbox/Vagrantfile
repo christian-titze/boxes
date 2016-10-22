@@ -1,0 +1,91 @@
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+# Required workaround to have different users for provisioning and SSH access.
+VAGRANT_COMMAND = ARGV[0]
+
+# Username to be used in box.
+BOX_USERNAME = "titze"
+BOX_NAME = "CTFbox"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  # Configure the box.
+  config.vm.box = "bento/ubuntu-16.04"
+  config.vm.hostname = "ctfbox"
+
+  # Configure SSH access.
+  if VAGRANT_COMMAND == "ssh"
+    config.ssh.username = BOX_USERNAME
+  end
+
+  # Increase RAM and CPUs.
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = BOX_NAME
+    vb.customize ["modifyvm", :id, "--memory", "4096"]
+    vb.customize ["modifyvm", :id, "--cpus", "2"]
+  end
+
+  # Share host folder.
+  #config.vm.synced_folder "~/Desktop/ctf", "/ctf"
+
+  # Provisioning: Add user and configure SSH keys and sudo-privileges.
+  config.vm.provision "shell", inline: "useradd -s /usr/bin/zsh -m #{BOX_USERNAME}" # Warning: /usr/bin/zsh is not installed yet!
+  config.vm.provision "shell", inline: "mkdir -p /home/#{BOX_USERNAME}/.ssh"
+  config.vm.provision "shell", inline: "cp -r /home/vagrant/.ssh/ /home/#{BOX_USERNAME}/"
+  config.vm.provision "shell", inline: "chown -R #{BOX_USERNAME}:#{BOX_USERNAME} /home/#{BOX_USERNAME}"
+  config.vm.provision "shell", inline: "sed -i 's/vagrant/#{BOX_USERNAME}/g' /home/#{BOX_USERNAME}/.ssh/authorized_keys"
+  config.vm.provision "shell", inline: "chmod 600 /home/#{BOX_USERNAME}/.ssh/authorized_keys"
+  config.vm.provision "shell", inline: "chmod 700 /home/#{BOX_USERNAME}/.ssh/"
+  config.vm.provision "shell", inline: "echo '#{BOX_USERNAME} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/#{BOX_USERNAME}"
+
+  # Provisioning: Install required dev tools.
+  config.vm.provision "shell", inline: "apt-get install -y vim git htop build-essential zsh python-dev python-pip python3-dev python3-pip curl tree" # Dev essentials.
+  config.vm.provision "shell", inline: "apt-get install -y libc6-i386 lib32stdc++6 lib32ncurses5 gcc-multilib g++-multilib" # 32-bit support.
+  config.vm.provision "shell", inline: "apt-get install -y nmap strace ltrace gdb gdb-multiarch nasm hexedit binutils" # h4xx0r classics.
+  config.vm.provision "shell", inline: "add-apt-repository -y ppa:neovim-ppa/unstable; apt-get update; apt-get install -y neovim" # NeoVim.
+
+  DIR_HOME = "/home/#{BOX_USERNAME}"
+  DIR_DOTFILES = "#{DIR_HOME}/.dotfiles"
+
+  # Python Exploit Development Assistance for GDB
+  config.vm.provision "shell", inline: "git clone https://github.com/longld/peda.git #{DIR_HOME}/peda"
+  config.vm.provision "shell", inline: "echo 'source ~/peda/peda.py' >> #{DIR_HOME}/.gdbinit"
+
+  # TODO checksec, ...
+
+  # Provisioning: Setup environment.
+  config.vm.provision "shell", inline: "git clone https://github.com/christian-titze/dotfiles #{DIR_DOTFILES}"
+
+  # config.vm.provision "shell", inline: "wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh; export ZSH=#{DIR_HOME}/.oh-my-zsh; chmod +x ./install.sh; ./install.sh; rm -f ./install.sh"
+  config.vm.provision "shell", inline: "git clone git://github.com/robbyrussell/oh-my-zsh.git #{DIR_HOME}/.oh-my-zsh" # oh-my-zsh
+  config.vm.provision "shell", inline: "git clone https://github.com/bhilburn/powerlevel9k.git #{DIR_HOME}/.oh-my-zsh/custom/themes/powerlevel9k" # powerlevel9k
+  config.vm.provision "shell", inline: "git clone https://github.com/chriskempson/base16-shell.git #{DIR_HOME}/.config/base16-shell" # base16-shell
+
+  # Symlink zsh config...
+  config.vm.provision "shell", inline: "ln -isv #{DIR_DOTFILES}/zsh/zshrc #{DIR_HOME}/.zshrc"
+
+  # Symlink nvim config...
+  config.vm.provision "shell", inline: "mkdir -pv #{DIR_HOME}/.config/nvim/autoload"
+  config.vm.provision "shell", inline: "ln -isv #{DIR_DOTFILES}/nvim/init.vim #{DIR_HOME}/.config/nvim/init.vim"
+  config.vm.provision "shell", inline: "ln -isv #{DIR_DOTFILES}/nvim/autoload/plug.vim #{DIR_HOME}/.config/nvim/autoload/plug.vim"
+
+  # Symlink for legacy vim support...
+  config.vm.provision "shell", inline: "mkdir -pv #{DIR_HOME}/.vim"
+  config.vm.provision "shell", inline: "ln -isv #{DIR_DOTFILES}/nvim/init.vim #{DIR_HOME}/.vim/vimrc"
+  config.vm.provision "shell", inline: "ln -isv #{DIR_DOTFILES}/nvim/init.vim #{DIR_HOME}/.vimrc"
+  config.vm.provision "shell", inline: "ln -isv #{DIR_HOME}/.config/nvim/autoload #{DIR_HOME}/.vim/autoload"
+
+  # Symlink tmux config...
+  # config.vm.provision "shell", inline: "ln -isv #{DIR_DOTFILES}/tmux/tmux.conf #{DIR_HOME}/.tmux.conf"
+  # config.vm.provision "shell", inline: "git clone https://github.com/tmux-plugins/tpm #{DIR_HOME}/.tmux/plugins/tpm"
+  # config.vm.provision "shell", inline: "tmux source #{DIR_HOME}/.tmux.conf"
+
+  # Fix permissions as many folders are owned by root after provisioning.
+  config.vm.provision "shell", inline: "chown -R #{BOX_USERNAME}:#{BOX_USERNAME} /home/#{BOX_USERNAME}"
+
+  # NeoVim Python support and YouCompleteMe.
+  # config.vm.provision "shell", inline: "cd #{DIR_HOME}/.config/nvim/plugged/YouCompleteMe; ./install.py --clang-completer" # Requires clang!
+  config.vm.provision "shell", inline: "pip2 install neovim"
+  config.vm.provision "shell", inline: "pip3 install neovim"
+
+end
