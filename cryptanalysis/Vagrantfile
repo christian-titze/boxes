@@ -39,5 +39,5 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell", inline: "echo '#{BOX_USERNAME} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/#{BOX_USERNAME}"
 
   # Provisioning: Install required dev tools.
-  config.vm.provision "shell", inline: "apt-get install -y vim git build-essential libgmp3-dev"
+  config.vm.provision "shell", inline: "apt-get install -y vim git htop build-essential libgmp3-dev"
 end
