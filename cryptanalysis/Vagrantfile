@@ -26,18 +26,32 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
   # Share host folder.
-  config.vm.synced_folder "~/Dropbox/cryptanalysis", "/cryptanalysis"
+  config.vm.synced_folder "~/Dropbox/cryptanalysis", "/cryptanalysis", mount_options: ["dmode=775,fmode=775"]
+
+  # Provisioning: Install required dev tools.
+  config.vm.provision "shell", path: "../scripts/ubuntu/upgrade.sh"
+
+  config.vm.provision "shell", path: "../scripts/ubuntu/dev-essentials.sh"
+  config.vm.provision "shell", path: "../scripts/ubuntu/nvim.sh"
+  config.vm.provision "shell", path: "../scripts/ubuntu/zsh.sh"
+
+  config.vm.provision "shell", inline: "apt-get install -y libgmp3-dev"
+
+  config.vm.provision "shell", path: "../scripts/dotfiles/nvim.sh", privileged: false
+  config.vm.provision "shell", path: "../scripts/dotfiles/zsh.sh", privileged: false
+
+  # Provisioning: Set environment variables.
+  config.vm.provision "shell", inline: "echo 'setenv PRAKTROOT /cryptanalysis' >> ~/.login", privileged: false
+  config.vm.provision "shell", inline: "echo 'export PRAKTROOT=/cryptanalysis' >> ~/.profile", privileged: false
+  config.vm.provision "shell", inline: "echo 'export PRAKTROOT=/cryptanalysis' >> ~/.bashrc", privileged: false
+  config.vm.provision "shell", inline: "echo 'export PRAKTROOT=/cryptanalysis' >> ~/.zshrc", privileged: false
 
   # Provisioning: Add user and configure SSH keys and sudo-privileges.
-  config.vm.provision "shell", inline: "useradd -s /bin/bash -m #{BOX_USERNAME}"
-  config.vm.provision "shell", inline: "mkdir -p /home/#{BOX_USERNAME}/.ssh"
-  config.vm.provision "shell", inline: "cp -r /home/vagrant/.ssh/ /home/#{BOX_USERNAME}/"
-  config.vm.provision "shell", inline: "sudo chown -R #{BOX_USERNAME}:#{BOX_USERNAME} /home/#{BOX_USERNAME}"
+  config.vm.provision "shell", inline: "useradd -s /usr/bin/zsh -m #{BOX_USERNAME} -G vagrant"
+  config.vm.provision "shell", inline: "rsync -av /home/vagrant/ /home/#{BOX_USERNAME}/"
+  config.vm.provision "shell", inline: "chown -R #{BOX_USERNAME}:#{BOX_USERNAME} /home/#{BOX_USERNAME}"
   config.vm.provision "shell", inline: "sed -i 's/vagrant/#{BOX_USERNAME}/g' /home/#{BOX_USERNAME}/.ssh/authorized_keys"
   config.vm.provision "shell", inline: "chmod 600 /home/#{BOX_USERNAME}/.ssh/authorized_keys"
   config.vm.provision "shell", inline: "chmod 700 /home/#{BOX_USERNAME}/.ssh/"
   config.vm.provision "shell", inline: "echo '#{BOX_USERNAME} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/#{BOX_USERNAME}"
-
-  # Provisioning: Install required dev tools.
-  config.vm.provision "shell", inline: "apt-get install -y vim git htop build-essential libgmp3-dev"
 end
