@@ -14,6 +14,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.hostname = "cryptanalysis"
 
   # Configure SSH access.
+  config.ssh.forward_x11 = true # Required for shared clipboard.
   if VAGRANT_COMMAND == "ssh"
     config.ssh.username = BOX_USERNAME
   end
@@ -47,11 +48,5 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell", inline: "echo 'export PRAKTROOT=/cryptanalysis' >> ~/.zshrc", privileged: false
 
   # Provisioning: Add user and configure SSH keys and sudo-privileges.
-  config.vm.provision "shell", inline: "useradd -s /usr/bin/zsh -m #{BOX_USERNAME} -G vagrant"
-  config.vm.provision "shell", inline: "rsync -av /home/vagrant/ /home/#{BOX_USERNAME}/"
-  config.vm.provision "shell", inline: "chown -R #{BOX_USERNAME}:#{BOX_USERNAME} /home/#{BOX_USERNAME}"
-  config.vm.provision "shell", inline: "sed -i 's/vagrant/#{BOX_USERNAME}/g' /home/#{BOX_USERNAME}/.ssh/authorized_keys"
-  config.vm.provision "shell", inline: "chmod 600 /home/#{BOX_USERNAME}/.ssh/authorized_keys"
-  config.vm.provision "shell", inline: "chmod 700 /home/#{BOX_USERNAME}/.ssh/"
-  config.vm.provision "shell", inline: "echo '#{BOX_USERNAME} ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/#{BOX_USERNAME}"
+  config.vm.provision "shell", path: "../scripts/vagrant/cp-create-user.sh", args: "-u #{BOX_USERNAME} -s /usr/bin/zsh -g vagrant"
 end
