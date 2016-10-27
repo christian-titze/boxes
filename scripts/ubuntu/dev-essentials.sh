@@ -2,4 +2,4 @@
 
 export DEBIAN_FRONTEND=noninteractive
 
-apt-get install -y vim git htop curl tree build-essential clang
+apt-get install -y vim git htop curl tree build-essential cmake
