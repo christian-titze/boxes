@@ -33,10 +33,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell", path: "../scripts/ubuntu/upgrade.sh"
 
   config.vm.provision "shell", path: "../scripts/ubuntu/dev-essentials.sh"
+  config.vm.provision "shell", path: "../scripts/ubuntu/multiarch.sh"
   config.vm.provision "shell", path: "../scripts/ubuntu/nvim.sh"
   config.vm.provision "shell", path: "../scripts/ubuntu/zsh.sh"
 
-  config.vm.provision "shell", inline: "apt-get install -y libgmp3-dev"
+  config.vm.provision "shell", inline: "apt-get install -y libgmp3-dev libgmp3-dev:i386"
 
   config.vm.provision "shell", path: "../scripts/dotfiles/nvim.sh", privileged: false
   config.vm.provision "shell", path: "../scripts/dotfiles/zsh.sh", privileged: false
