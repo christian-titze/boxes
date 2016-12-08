@@ -1,5 +1,5 @@
-# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
-VAGRANTFILE_API_VERSION = "2"
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
 
 # Required workaround to have different users for provisioning and SSH access.
 VAGRANT_COMMAND = ARGV[0]
@@ -8,7 +8,7 @@ VAGRANT_COMMAND = ARGV[0]
 BOX_USERNAME = "titze"
 BOX_NAME = "CTFbox"
 
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+Vagrant.configure("2") do |config|
   # Configure the box.
   config.vm.box = "bento/ubuntu-16.04"
   config.vm.hostname = "ctfbox"
@@ -22,8 +22,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Increase RAM and CPUs.
   config.vm.provider "virtualbox" do |vb|
     vb.name = BOX_NAME
-    vb.customize ["modifyvm", :id, "--memory", "4096"]
-    vb.customize ["modifyvm", :id, "--cpus", "2"]
+    vb.memory = "4096"
+    vb.cpus = "2"
   end
 
   # Share host folder.
@@ -36,6 +36,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "shell", path: "../scripts/ubuntu/multiarch.sh"
   config.vm.provision "shell", path: "../scripts/ubuntu/sec-essentials.sh"
   config.vm.provision "shell", path: "../scripts/ubuntu/python.sh"
+  config.vm.provision "shell", path: "../scripts/ubuntu/pwntools.sh"
+  config.vm.provision "shell", path: "../scripts/ubuntu/ROPgadget.sh"
   config.vm.provision "shell", path: "../scripts/ubuntu/nvim.sh"
   config.vm.provision "shell", path: "../scripts/ubuntu/zsh.sh"
 
