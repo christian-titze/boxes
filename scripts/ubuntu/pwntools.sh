@@ -1,4 +1,5 @@
 #!/bin/bash
 
-apt-get install -y python2.7 python-pip python-dev git libssl-dev
+./python.sh
+apt-get install -y libssl-dev
 pip install --upgrade pwntools
