@@ -6,7 +6,8 @@ apt-get install -y neovim
 
 # Many plugins need Python support.
 ./python.sh
-pip install --upgrade neovim
+pip2 install --upgrade neovim
+pip3 install --upgrade neovim
 
 # For shared clipboard support.
 apt-get install -y xauth xclip
