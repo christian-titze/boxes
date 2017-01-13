@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export DEBIAN_FRONTEND=noninteractive
+
 # Remove the "us" subdomain for sources.
 sed -i 's/http:\/\/us./http:\/\//g' /etc/apt/sources.list
 
